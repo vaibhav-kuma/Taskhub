@@ -1,0 +1,64 @@
+# Render Blueprint: managed PostgreSQL + the API container.
+#
+#   1. Push this repository to GitHub.
+#   2. Render dashboard -> New -> Blueprint -> pick the repo.
+#   3. Render creates the database, generates the JWT secret, and deploys the API.
+#   4. Add the resulting https://<service>.onrender.com URL to the desktop client's
+#      "Server URL" field (or TASKHUB_API_URL).
+#
+# Free instances sleep after inactivity; the first request after a pause takes ~30s.
+
+databases:
+  - name: taskhub-db
+    databaseName: taskhub
+    user: taskhub
+    plan: basic-256mb
+    region: oregon
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+services:
+  - type: web
+    name: taskhub-api
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health/readiness
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: TASKHUB_JWT_SECRET
+        generateValue: true
+      - key: TASKHUB_DB_HOST
+        fromDatabase:
+          name: taskhub-db
+          property: host
+      - key: TASKHUB_DB_PORT
+        fromDatabase:
+          name: taskhub-db
+          property: port
+      - key: TASKHUB_DB_NAME
+        fromDatabase:
+          name: taskhub-db
+          property: database
+      - key: TASKHUB_DB_USER
+        fromDatabase:
+          name: taskhub-db
+          property: user
+      - key: TASKHUB_DB_PASSWORD
+        fromDatabase:
+          name: taskhub-db
+          property: password
+      - key: TASKHUB_CORS_ORIGINS
+        sync: false
+      - key: TASKHUB_LOG_LEVEL
+        value: INFO
+      - key: TASKHUB_HEALTH_DETAILS
+        value: never
+      - key: TASKHUB_DB_POOL_SIZE
+        value: 10
+      - key: TASKHUB_OPENAPI_ENABLED
+        value: "true"

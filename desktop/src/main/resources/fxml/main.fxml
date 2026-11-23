@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.taskhub.desktop.ui.MainController"
+           fx:id="root" styleClass="app-root">
+
+    <BorderPane>
+        <top>
+            <VBox>
+                <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="10">
+                    <padding>
+                        <Insets top="14" right="20" bottom="14" left="20"/>
+                    </padding>
+                    <Label text="TaskHub" styleClass="brand-small"/>
+                    <Label fx:id="connectionLabel" styleClass="pill"/>
+                    <Region HBox.hgrow="ALWAYS" prefWidth="20"/>
+                    <ProgressIndicator fx:id="busyIndicator" prefWidth="18" prefHeight="18"
+                                       visible="false" managed="false"/>
+                    <Button fx:id="newTaskButton" text="+  New task" onAction="#onNewTask"
+                            styleClass="primary-button"/>
+                    <Button fx:id="projectsButton" text="Projects" onAction="#onOpenProjects"
+                            styleClass="ghost-button"/>
+                    <Button fx:id="refreshButton" text="Refresh" onAction="#onRefresh"
+                            styleClass="ghost-button"/>
+                    <Button fx:id="themeButton" text="Dark" onAction="#onToggleTheme"
+                            styleClass="ghost-button"/>
+                    <MenuButton fx:id="userMenu" styleClass="ghost-button">
+                        <items>
+                            <MenuItem text="Sign out" onAction="#onSignOut"/>
+                        </items>
+                    </MenuButton>
+                </HBox>
+
+                <FlowPane styleClass="filterbar" hgap="10" vgap="10" prefWrapLength="900">
+                    <padding>
+                        <Insets top="12" right="20" bottom="12" left="20"/>
+                    </padding>
+                    <TextField fx:id="searchField" promptText="Search title or description (Ctrl+F)"
+                               prefWidth="300" styleClass="search-field"/>
+                    <ComboBox fx:id="projectFilter" prefWidth="230"/>
+                    <ComboBox fx:id="statusFilter" prefWidth="150"/>
+                    <ComboBox fx:id="priorityFilter" prefWidth="150"/>
+                    <CheckBox fx:id="mineCheck" text="Only mine"/>
+                    <CheckBox fx:id="overdueCheck" text="Overdue"/>
+                    <Button fx:id="clearFiltersButton" text="Clear" onAction="#onClearFilters"
+                            styleClass="ghost-button"/>
+                </FlowPane>
+            </VBox>
+        </top>
+
+        <center>
+            <TableView fx:id="taskTable" styleClass="task-table">
+                <columns>
+                    <TableColumn fx:id="titleColumn" text="TASK" prefWidth="320"/>
+                    <TableColumn fx:id="projectColumn" text="PROJECT" prefWidth="170"/>
+                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="120"/>
+                    <TableColumn fx:id="priorityColumn" text="PRIORITY" prefWidth="110"/>
+                    <TableColumn fx:id="dueColumn" text="DUE" prefWidth="150"/>
+                    <TableColumn fx:id="assigneeColumn" text="ASSIGNEE" prefWidth="150"/>
+                    <TableColumn fx:id="updatedColumn" text="UPDATED" prefWidth="150"/>
+                </columns>
+            </TableView>
+        </center>
+
+        <bottom>
+            <HBox styleClass="statusbar" alignment="CENTER_LEFT" spacing="10">
+                <padding>
+                    <Insets top="10" right="20" bottom="10" left="20"/>
+                </padding>
+                <Label fx:id="resultLabel" styleClass="muted"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Rows" styleClass="muted"/>
+                <ComboBox fx:id="pageSizeBox" prefWidth="80"/>
+                <Button fx:id="prevButton" text="Previous" onAction="#onPreviousPage"
+                        styleClass="ghost-button"/>
+                <Label fx:id="pageLabel" styleClass="muted"/>
+                <Button fx:id="nextButton" text="Next" onAction="#onNextPage"
+                        styleClass="ghost-button"/>
+            </HBox>
+        </bottom>
+    </BorderPane>
+
+    <VBox fx:id="toastLayer" mouseTransparent="true" maxWidth="440" maxHeight="240"
+          StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets bottom="64" right="24"/>
+        </StackPane.margin>
+    </VBox>
+</StackPane>

@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+#
+# ALL-IN-ONE image for constrained Fly.io orgs that cannot create a second app/cluster.
+# The API and PostgreSQL 16 run in one Machine, with the database on the "pgdata" volume
+# and reachable only over loopback (127.0.0.1) — never exposed to the public network.
+#
+# Build context = repository root:
+#   docker build -f backend/Dockerfile.fly -t taskhub-allinone .
+#
+# Use backend/Dockerfile (not this file) when a managed PostgreSQL is available.
+
+# ---------------------------------------------------------------------------- build
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY backend/pom.xml ./pom.xml
+RUN mvn -B -q -DskipTests dependency:go-offline
+COPY backend/src ./src
+RUN mvn -B -q -DskipTests clean package \
+    && cp target/taskhub-api.jar /build/app.jar
+
+# ---------------------------------------------------------------------------- runtime
+FROM eclipse-temurin:21-jre-alpine
+
+# postgresql16 = server + initdb/pg_ctl; postgresql16-client = psql/pg_isready.
+# su-exec lets the entrypoint drop privileges per process.
+RUN apk add --no-cache postgresql16 postgresql16-client su-exec \
+    && addgroup -S taskhub \
+    && adduser -S -G taskhub -h /app taskhub \
+    && mkdir -p /data /var/run/postgresql \
+    && chown postgres:postgres /data /var/run/postgresql
+
+WORKDIR /app
+COPY --from=build /build/app.jar /app/app.jar
+COPY backend/docker/fly-entrypoint.sh /usr/local/bin/fly-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/fly-entrypoint.sh
+
+ENV PGDATA=/data/pgdata \
+    POSTGRES_DB=taskhub \
+    POSTGRES_USER=taskhub \
+    SPRING_PROFILES_ACTIVE=prod \
+    PORT=8080 \
+    JAVA_OPTS="-XX:MaxRAMPercentage=55 -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
+
+# The entrypoint starts as root (to chown the volume and run postgres as "postgres"),
+# then drops to the "taskhub" user for the JVM.
+USER root
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT}/actuator/health/readiness" >/dev/null 2>&1 || exit 1
+
+ENTRYPOINT ["/usr/local/bin/fly-entrypoint.sh"]

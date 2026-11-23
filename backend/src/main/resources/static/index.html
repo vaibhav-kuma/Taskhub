@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <title>TaskHub</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <!-- Optional browser client. The JavaFX desktop application is the primary UI;
+       both consume the exact same REST API. -->
+  <div id="app" class="app">
+    <section id="login-view" class="login-wrap">
+      <div class="login-card">
+        <div class="hero">
+          <div class="brand">TaskHub</div>
+          <div class="hero-copy">
+            <h1>Plan the work.<br/>Ship the work.</h1>
+            <p>A secure task workspace. Same REST API as the desktop client.</p>
+          </div>
+          <div class="hero-foot">Spring Boot 3.5 · PostgreSQL · JWT</div>
+        </div>
+        <form id="login-form" class="login-form" autocomplete="on">
+          <h2>Welcome back</h2>
+          <p class="muted">Sign in to your workspace</p>
+          <label for="server">Server URL</label>
+          <input id="server" name="server" type="url" placeholder="https://your-api.example.com" required/>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required/>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Your password" required/>
+          <div id="login-error" class="error" hidden></div>
+          <button id="login-button" class="primary" type="submit">Sign in</button>
+          <div class="switch">
+            <span class="muted">New here?</span>
+            <button id="show-register" type="button" class="link">Create an account</button>
+          </div>
+          <p id="login-hint" class="hint">Credentials are sent over HTTPS and kept in memory only.</p>
+        </form>
+
+        <form id="register-form" class="login-form" autocomplete="on" hidden>
+          <h2>Create your account</h2>
+          <p class="muted">Open sign-up. New accounts start with the Member role.</p>
+          <label for="reg-server">Server URL</label>
+          <input id="reg-server" name="server" type="url" placeholder="https://your-api.example.com" required/>
+          <label for="reg-name">Display name</label>
+          <input id="reg-name" name="name" type="text" placeholder="Ada Lovelace" maxlength="120" required/>
+          <label for="reg-email">Email</label>
+          <input id="reg-email" name="email" type="email" placeholder="you@example.com" required/>
+          <label for="reg-password">Password</label>
+          <input id="reg-password" name="new-password" type="password"
+                 placeholder="At least 12 characters, with a letter and a digit" required/>
+          <label for="reg-confirm">Confirm password</label>
+          <input id="reg-confirm" name="confirm-password" type="password"
+                 placeholder="Repeat your password" required/>
+          <div id="register-error" class="error" hidden></div>
+          <button id="register-button" class="primary" type="submit">Create account</button>
+          <div class="switch">
+            <span class="muted">Already have an account?</span>
+            <button id="show-login" type="button" class="link">Sign in</button>
+          </div>
+          <p class="hint">Passwords are hashed with BCrypt; nothing is stored in this browser.</p>
+        </form>
+      </div>
+    </section>
+
+    <section id="workspace" hidden>
+      <header class="topbar">
+        <div class="brand-small">TaskHub</div>
+        <span id="server-pill" class="pill"></span>
+        <div class="spacer"></div>
+        <button id="new-task" class="primary" type="button">+ New task</button>
+        <button id="new-project" class="ghost" type="button">+ Project</button>
+        <button id="theme-toggle" class="ghost" type="button">Dark</button>
+        <span id="user-label" class="user"></span>
+        <button id="logout" class="ghost" type="button">Sign out</button>
+      </header>
+
+      <div class="filters">
+        <input id="search" type="search" placeholder="Search title or description"/>
+        <select id="project-filter"></select>
+        <select id="status-filter"></select>
+        <select id="priority-filter"></select>
+        <label class="check"><input id="overdue-filter" type="checkbox"/> Overdue</label>
+        <button id="clear-filters" class="ghost" type="button">Clear</button>
+      </div>
+
+      <main>
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th data-sort="title">Task</th>
+              <th data-sort="project">Project</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="priority">Priority</th>
+              <th data-sort="dueDate">Due</th>
+              <th>Assignee</th>
+              <th data-sort="updatedAt">Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="task-rows"></tbody>
+        </table>
+        <p id="empty-state" class="empty" hidden>No tasks match the current filters.</p>
+      </main>
+
+      <footer class="statusbar">
+        <span id="result-summary" class="muted"></span>
+        <div class="spacer"></div>
+        <label class="muted" for="page-size">Rows</label>
+        <select id="page-size">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+        </select>
+        <button id="prev-page" class="ghost" type="button">Previous</button>
+        <span id="page-label" class="muted"></span>
+        <button id="next-page" class="ghost" type="button">Next</button>
+      </footer>
+    </section>
+
+    <div id="toasts" class="toasts"></div>
+  </div>
+
+  <dialog id="task-dialog">
+    <form id="task-form" method="dialog">
+      <h2 id="task-dialog-title">New task</h2>
+      <label for="task-project">Project</label>
+      <select id="task-project"></select>
+      <label for="task-title">Title</label>
+      <input id="task-title" type="text" maxlength="200" required/>
+      <label for="task-description">Description</label>
+      <textarea id="task-description" rows="3"></textarea>
+      <div class="two-col">
+        <div>
+          <label for="task-status">Status</label>
+          <select id="task-status"></select>
+        </div>
+        <div>
+          <label for="task-priority">Priority</label>
+          <select id="task-priority"></select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <label for="task-due">Due date</label>
+          <input id="task-due" type="date"/>
+        </div>
+        <div>
+          <label for="task-assignee">Assignee</label>
+          <select id="task-assignee"></select>
+        </div>
+      </div>
+      <div id="task-error" class="error" hidden></div>
+      <div class="dialog-actions">
+        <button id="task-cancel" class="ghost" type="button">Cancel</button>
+        <button id="task-save" class="primary" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="project-dialog">
+    <form id="project-form" method="dialog">
+      <h2>New project</h2>
+      <label for="project-code">Code</label>
+      <input id="project-code" type="text" maxlength="16" placeholder="APOLLO" required/>
+      <label for="project-name">Name</label>
+      <input id="project-name" type="text" maxlength="160" required/>
+      <label for="project-status">Status</label>
+      <select id="project-status"></select>
+      <div id="project-error" class="error" hidden></div>
+      <div class="dialog-actions">
+        <button id="project-cancel" class="ghost" type="button">Cancel</button>
+        <button class="primary" type="submit">Create project</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

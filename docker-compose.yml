@@ -1,0 +1,87 @@
+# Production-shaped local stack: PostgreSQL + API + web client (same-origin proxy).
+#
+#   cp .env.example .env      # then edit the JWT secret
+#   docker compose up -d --build
+#   open http://localhost:8081          (browser SPA)
+#   curl http://localhost:8080/actuator/health
+#
+# The API is also usable directly by the JavaFX desktop client at http://localhost:8080.
+name: taskhub
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-taskhub}
+      POSTGRES_USER: ${POSTGRES_USER:-taskhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskhub}
+    volumes:
+      - taskhub-db:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-taskhub} -d ${POSTGRES_DB:-taskhub}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=256MB
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TASKHUB_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-taskhub}
+      TASKHUB_DB_USER: ${POSTGRES_USER:-taskhub}
+      TASKHUB_DB_PASSWORD: ${POSTGRES_PASSWORD:-taskhub}
+      TASKHUB_DB_POOL_SIZE: ${TASKHUB_DB_POOL_SIZE:-10}
+      TASKHUB_JWT_SECRET: ${TASKHUB_JWT_SECRET:?set TASKHUB_JWT_SECRET in .env (openssl rand -base64 48)}
+      TASKHUB_CORS_ORIGINS: ${TASKHUB_CORS_ORIGINS:-http://localhost:8081}
+      TASKHUB_BOOTSTRAP_ADMIN_EMAIL: ${TASKHUB_BOOTSTRAP_ADMIN_EMAIL:-}
+      TASKHUB_BOOTSTRAP_ADMIN_PASSWORD: ${TASKHUB_BOOTSTRAP_ADMIN_PASSWORD:-}
+      TASKHUB_BOOTSTRAP_ADMIN_NAME: ${TASKHUB_BOOTSTRAP_ADMIN_NAME:-Administrator}
+      TASKHUB_LOG_LEVEL: ${TASKHUB_LOG_LEVEL:-INFO}
+      TASKHUB_HEALTH_DETAILS: ${TASKHUB_HEALTH_DETAILS:-never}
+      PORT: 8080
+    ports:
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health/readiness >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  web:
+    build:
+      context: ./web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8081}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  taskhub-db:
+    driver: local

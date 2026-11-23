@@ -1,0 +1,28 @@
+# Development profile: local PostgreSQL, verbose SQL, demo data.
+# The JWT secret below is a throwaway value committed on purpose so `mvn spring-boot:run`
+# works out of the box. NEVER reuse it outside your laptop — prod refuses to start without
+# TASKHUB_JWT_SECRET.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    clean-disabled: false
+
+taskhub:
+  jwt:
+    secret: ${TASKHUB_JWT_SECRET:Fz6xFaB60vuvjQ+QpamwKgojDWHUhqvNHlukJOcbpVWRuO9QTWqVYtuzO3QhCAc/}
+
+logging:
+  level:
+    com.taskhub: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+management:
+  endpoint:
+    health:
+      show-details: always

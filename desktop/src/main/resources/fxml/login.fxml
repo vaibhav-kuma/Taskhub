@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.taskhub.desktop.ui.LoginController"
+           styleClass="auth-root">
+
+    <HBox maxWidth="1020" maxHeight="640" styleClass="auth-card" alignment="CENTER">
+        <VBox styleClass="auth-hero" prefWidth="460" spacing="16" HBox.hgrow="ALWAYS" maxWidth="Infinity">
+            <padding>
+                <Insets top="44" right="40" bottom="40" left="40"/>
+            </padding>
+            <Label text="TaskHub" styleClass="brand"/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label text="Plan the work.&#10;Ship the work." styleClass="hero-title" wrapText="true"/>
+            <Label styleClass="hero-subtitle" wrapText="true"
+                   text="A focused desktop workspace for the tasks that actually matter. Native on Windows, Linux and macOS, talking to a secure REST API over HTTPS."/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label styleClass="hero-foot" text="JavaFX 21  ·  Spring Boot 3.5  ·  PostgreSQL"/>
+        </VBox>
+
+        <VBox styleClass="auth-form" prefWidth="460" spacing="6">
+            <padding>
+                <Insets top="44" right="44" bottom="36" left="44"/>
+            </padding>
+
+            <Label text="Welcome back" styleClass="h1"/>
+            <Label text="Sign in to your workspace" styleClass="muted">
+                <VBox.margin>
+                    <Insets bottom="18"/>
+                </VBox.margin>
+            </Label>
+
+            <Label text="Server URL" styleClass="field-label"/>
+            <TextField fx:id="serverField" promptText="https://your-api.example.com">
+                <VBox.margin>
+                    <Insets bottom="10"/>
+                </VBox.margin>
+            </TextField>
+
+            <Label text="Email" styleClass="field-label"/>
+            <TextField fx:id="emailField" promptText="you@example.com">
+                <VBox.margin>
+                    <Insets bottom="10"/>
+                </VBox.margin>
+            </TextField>
+
+            <Label text="Password" styleClass="field-label"/>
+            <PasswordField fx:id="passwordField" promptText="Your password" onAction="#onLogin">
+                <VBox.margin>
+                    <Insets bottom="14"/>
+                </VBox.margin>
+            </PasswordField>
+
+            <Label fx:id="errorLabel" styleClass="error-text" wrapText="true"
+                   managed="false" visible="false"/>
+
+            <Button fx:id="loginButton" text="Sign in" onAction="#onLogin"
+                    styleClass="primary-button" maxWidth="Infinity" defaultButton="true">
+                <VBox.margin>
+                    <Insets top="6" bottom="10"/>
+                </VBox.margin>
+            </Button>
+
+            <HBox alignment="CENTER" spacing="4">
+                <Label text="New here?" styleClass="muted"/>
+                <Hyperlink text="Create an account" onAction="#onRegister"/>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <ProgressIndicator fx:id="progress" prefWidth="20" prefHeight="20"
+                                   visible="false" managed="false"/>
+                <Label fx:id="statusLabel" styleClass="hint" wrapText="true"
+                       text="Credentials are sent to the API over HTTPS and never stored on this machine."/>
+            </HBox>
+        </VBox>
+    </HBox>
+</StackPane>

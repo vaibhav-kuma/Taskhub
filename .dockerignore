@@ -1,0 +1,8 @@
+target
+.git
+.github
+*.log
+docs
+scripts
+web
+desktop

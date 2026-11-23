@@ -1,0 +1,29 @@
+# ----- build artefacts -------------------------------------------------------
+target/
+*.class
+*.jar
+!**/src/main/**/*.jar
+
+# ----- secrets & local environment ------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+
+# ----- IDE / OS -------------------------------------------------------------
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.DS_Store
+Thumbs.db
+
+# ----- runtime --------------------------------------------------------------
+*.log
+logs/
+ui-screenshots/
+.attach_pid*

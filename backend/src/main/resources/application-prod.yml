@@ -1,0 +1,46 @@
+# Production profile. Everything security-relevant comes from the environment; the app
+# fails fast at startup when a required value is missing or weak.
+spring:
+  datasource:
+    url: ${TASKHUB_DB_URL:jdbc:postgresql://${PGHOST:${TASKHUB_DB_HOST:localhost}}:${PGPORT:${TASKHUB_DB_PORT:5432}}/${PGDATABASE:${TASKHUB_DB_NAME:taskhub}}?sslmode=${PGSSLMODE:require}}
+    username: ${TASKHUB_DB_USER:${PGUSER:taskhub}}
+    password: ${TASKHUB_DB_PASSWORD:${PGPASSWORD:taskhub}}
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    clean-disabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  tomcat:
+    threads:
+      max: ${TASKHUB_MAX_THREADS:200}
+  # TLS is terminated at the platform edge (Fly/Render/nginx) and X-Forwarded-* is honoured
+  # via server.forward-headers-strategy=framework. Direct HTTP outside a trusted proxy should
+  # be blocked by the platform/firewall.
+
+taskhub:
+  jwt:
+    secret: ${TASKHUB_JWT_SECRET:${JWT_SECRET}}
+  cors:
+    allowed-origins: ${TASKHUB_CORS_ORIGINS:${APP_URL:https://taskhub.antideploy.app}}
+  rate-limit:
+    enabled: true
+    auth-attempts: ${TASKHUB_RATE_LIMIT_ATTEMPTS:10}
+    auth-window: ${TASKHUB_RATE_LIMIT_WINDOW:PT5M}
+
+management:
+  endpoint:
+    health:
+      show-details: ${TASKHUB_HEALTH_DETAILS:never}
+
+logging:
+  structured:
+    format:
+      console: ecs
+  level:
+    root: INFO
+    com.taskhub: ${TASKHUB_LOG_LEVEL:INFO}
